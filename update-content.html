@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Update Content — JTKiaz App</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/theme.css">
+<style>
+  .tool-wrap { max-width: 760px; margin: 0 auto; padding: var(--space-4) var(--space-3) var(--space-5); }
+  .step { border: 1px solid var(--parchment-dim); padding: var(--space-3); margin-bottom: var(--space-3); background: #fff; }
+  .step h3 { font-family: var(--font-display); margin: 0 0 0.4rem; font-size: 1.3rem; }
+  .step p { color: var(--brown-soft); margin: 0 0 0.8rem; font-size: 0.92rem; }
+  .drop-zone {
+    border: 2px dashed var(--brown-soft);
+    padding: var(--space-3);
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    color: var(--brown-soft);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .drop-zone:hover, .drop-zone.drag { border-color: var(--gold); background: var(--parchment-dim); color: var(--ink); }
+  .drop-zone input { display: none; }
+  .file-name { font-family: var(--font-mono); font-size: 0.82rem; color: var(--ink); margin-top: 0.6rem; }
+  .tab-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid var(--parchment-dim); font-family: var(--font-mono); font-size: 0.82rem; }
+  .tab-row:last-child { border-bottom: none; }
+  .tab-row .status { color: var(--gold); }
+  .tab-row .status.ok { color: #3E7D3E; }
+  .tab-row .status.missing { color: #A3402F; }
+  #summary { font-family: var(--font-mono); font-size: 0.88rem; white-space: pre-wrap; background: var(--ink); color: var(--gold-bright); padding: var(--space-2); display: none; }
+  #summary.show { display: block; }
+  .warn { background: var(--parchment-dim); padding: var(--space-2); font-size: 0.86rem; color: var(--ink); border-left: 3px solid var(--gold); margin-bottom: var(--space-3); }
+  .legacy-toggle { font-family: var(--font-mono); font-size: 0.78rem; color: var(--brown-soft); margin-top: var(--space-2); cursor: pointer; text-decoration: underline; }
+  #legacy-panel { display: none; margin-top: var(--space-2); }
+  #legacy-panel.show { display: block; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="wordmark">JTKiaz<span class="accent">App</span></a>
+  </div>
+</header>
+
+<div class="tool-wrap">
+  <span class="back-link" style="cursor:pointer" onclick="location.href='index.html'">&larr; Back to the app</span>
+  <h2 style="font-family:var(--font-display);font-size:2.2rem;margin:0.6rem 0 0.3rem;">Update content</h2>
+  <p style="color:var(--brown-soft);margin:0 0 1.5rem;">No Node, no terminal. Load your one Excel workbook below, then download the file that runs your app.</p>
+
+  <div class="warn">This page now reads a <strong>single Excel file</strong> —
+  <code>JTKiaz-Content-Workbook.xlsx</code> — with one tab per sheet
+  (Books, Chapters, Poems, Quotes, Music, Blog, Promo Popups). Edit it in
+  Excel or Google Sheets, keep the tab names exactly as they are, save/export
+  as <code>.xlsx</code>, and drop it below. If you don't have Node.js
+  installed, or running <code>node build-data.js</code> in a terminal isn't
+  working for you, this page does the exact same job entirely in your
+  browser.</div>
+
+  <div class="step">
+    <h3>1. Load your workbook</h3>
+    <p>One file does it all now — no more loading six CSVs one at a time.</p>
+    <label class="drop-zone" id="drop-zone">
+      <span id="drop-label">📘 Click to choose JTKiaz-Content-Workbook.xlsx<br>(or drag it here)</span>
+      <input type="file" id="file-input" accept=".xlsx,.xls">
+    </label>
+    <div class="file-name" id="file-name"></div>
+    <div id="tab-rows" style="margin-top:0.8rem"></div>
+    <div class="legacy-toggle" id="legacy-toggle">Still on the old six-CSV workflow? Click here.</div>
+    <div id="legacy-panel">
+      <div class="step" style="margin-top:0.6rem">
+        <p><strong>Legacy mode.</strong> Load all six CSVs below — every one,
+        even files you didn't change. This is kept only for people mid-way
+        through migrating; once you've moved your data into the workbook,
+        use step 1 above instead and ignore this section.</p>
+        <div id="file-rows"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3>2. Check the counts</h3>
+    <p>Make sure the numbers below match what you expect — e.g. if you added 3 chapters, the chapter count should be 3 higher than before.</p>
+    <div id="summary"></div>
+  </div>
+
+  <div class="step">
+    <h3>3. Download and replace</h3>
+    <p>This saves a file called <code>data.js</code>. Move it into your <code>js</code> folder, overwriting the old one. Then open (or refresh) <code>index.html</code>.</p>
+    <button class="btn" id="download-btn" disabled>Download data.js (load your workbook first)</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  const SHEETS = ['books', 'chapters', 'poems', 'quotes', 'music', 'blog', 'popups'];
+  const TAB_NAMES = { books: 'Books', chapters: 'Chapters', poems: 'Poems', quotes: 'Quotes', music: 'Music', blog: 'Blog', popups: 'Promo Popups' };
+  const loaded = {}; // name -> array of row objects
+  const summaryEl = document.getElementById('summary');
+  const downloadBtn = document.getElementById('download-btn');
+  const tabRowsEl = document.getElementById('tab-rows');
+  const fileNameEl = document.getElementById('file-name');
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  // ---- workbook (.xlsx) path ----
+  function sheetToRows(ws) {
+    if (!ws) return null;
+    return XLSX.utils.sheet_to_json(ws, { defval: '', raw: false }).map(row => {
+      const clean = {};
+      Object.keys(row).forEach(k => { clean[k.trim()] = String(row[k] == null ? '' : row[k]).trim(); });
+      return clean;
+    });
+  }
+
+  function handleWorkbookFile(file) {
+    fileNameEl.textContent = `Loaded: ${file.name}`;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      tabRowsEl.innerHTML = '';
+      let anyMissing = false;
+      SHEETS.forEach(key => {
+        const tabName = TAB_NAMES[key];
+        const rows = sheetToRows(wb.Sheets[tabName]);
+        const row = document.createElement('div');
+        row.className = 'tab-row';
+        if (rows) {
+          loaded[key] = rows;
+          row.innerHTML = `<span>${tabName}</span><span class="status ok">${rows.length} rows</span>`;
+        } else {
+          if (key !== 'popups') anyMissing = true; // popups tab is optional for older workbooks
+          row.innerHTML = `<span>${tabName}</span><span class="status missing">tab not found</span>`;
+        }
+        tabRowsEl.appendChild(row);
+      });
+      if (anyMissing) {
+        const warn = document.createElement('div');
+        warn.className = 'warn';
+        warn.style.marginTop = '0.6rem';
+        warn.textContent = 'One or more required tabs are missing — check the tab names in your workbook exactly match: Books, Chapters, Poems, Quotes, Music, Blog.';
+        tabRowsEl.appendChild(warn);
+      }
+      refresh();
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) handleWorkbookFile(e.target.files[0]);
+  });
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag');
+    if (e.dataTransfer.files[0]) handleWorkbookFile(e.dataTransfer.files[0]);
+  });
+
+  // ---- legacy six-CSV path (kept for people mid-migration) ----
+  document.getElementById('legacy-toggle').addEventListener('click', () => {
+    document.getElementById('legacy-panel').classList.toggle('show');
+  });
+  const legacySheets = ['books', 'chapters', 'poems', 'quotes', 'music', 'blog'];
+  const rowsContainer = document.getElementById('file-rows');
+  legacySheets.forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'file-row';
+    row.innerHTML = `
+      <span>${name}.csv</span>
+      <input type="file" accept=".csv" data-sheet="${name}">
+      <span class="status" id="status-${name}">not loaded</span>
+    `;
+    rowsContainer.appendChild(row);
+  });
+  rowsContainer.querySelectorAll('input[type=file]').forEach(input => {
+    input.addEventListener('change', async (e) => {
+      const name = input.dataset.sheet;
+      const file = e.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      loaded[name] = parseCSV(text);
+      document.getElementById(`status-${name}`).textContent = `${loaded[name].length} rows loaded`;
+      document.getElementById(`status-${name}`).classList.add('ok');
+      refresh();
+    });
+  });
+
+  // ---- same CSV parser logic as build-data.js, ported to the browser (legacy fallback) ----
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], field = '', inQuotes = false;
+    text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQuotes) {
+        if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; } }
+        else field += c;
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ',') { row.push(field); field = ''; }
+        else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+        else field += c;
+      }
+    }
+    if (field.length || row.length) { row.push(field); rows.push(row); }
+    const headers = rows.shift().map(h => h.trim());
+    return rows
+      .filter(r => r.some(cell => cell.trim() !== ''))
+      .map(r => { const obj = {}; headers.forEach((h, idx) => { obj[h] = (r[idx] || '').trim(); }); return obj; });
+  }
+
+  // popups mini-format (INLINE chapter pop-ups — different from the Promo Popups tab):
+  // "id:p1;caption:...;image:...;audio:...;video:...;link:...;linktext:..."
+  // multiple popups on one chapter are separated by "|". See README §8.8.
+  function parsePopups(raw) {
+    if (!raw) return [];
+    return raw.split('|').map(chunk => {
+      const fields = {};
+      chunk.split(';').forEach(pair => {
+        const i = pair.indexOf(':');
+        if (i === -1) return;
+        const key = pair.slice(0, i).trim();
+        const val = pair.slice(i + 1).trim();
+        if (key) fields[key] = val;
+      });
+      return fields;
+    }).filter(p => p.id);
+  }
+
+  function buildBooks() {
+    const books = loaded.books || [];
+    const chapters = loaded.chapters || [];
+    return books.map(b => ({
+      id: b.book_id, title: b.title, author: b.author, type: b.type,
+      tags: (b.tags || '').split(',').map(t => t.trim()).filter(Boolean),
+      summary: b.summary, rating: parseFloat(b.rating) || 0, reads: parseInt(b.reads, 10) || 0,
+      cover: b.cover_image || '',
+      themeColor: b.theme_color || '', themeFont: b.theme_font || '', themeTrack: b.theme_track || '',
+      chapters: chapters.filter(c => c.book_id === b.book_id)
+        .sort((a, c) => parseInt(a.chapter_number, 10) - parseInt(c.chapter_number, 10))
+        .map(c => ({
+          number: parseInt(c.chapter_number, 10), title: c.chapter_title, content: c.content, wordCount: parseInt(c.word_count, 10) || 0,
+          image: c.image || '', imageCaption: c.image_caption || '', audio: c.audio || '', popups: parsePopups(c.popups)
+        }))
+    }));
+  }
+
+  function buildPoems() {
+    const rows = loaded.poems || [];
+    const standalone = [], groups = {};
+    rows.forEach(p => {
+      const entry = {
+        id: p.poem_id, collection: p.collection, title: p.title, body: p.body,
+        tags: (p.tags || '').split(',').map(t => t.trim()).filter(Boolean),
+        font: p.font || '', color: p.color || '', sound: p.sound || ''
+      };
+      if (p.part_of) {
+        if (!groups[p.part_of]) groups[p.part_of] = { id: p.part_of, collection: p.collection, tags: entry.tags, font: entry.font, color: entry.color, sound: entry.sound, parts: [] };
+        groups[p.part_of].parts.push(Object.assign({}, entry, { partNumber: parseInt(p.part_number, 10) || 0 }));
+      } else standalone.push(entry);
+    });
+    const multiPart = Object.values(groups).map(g => {
+      g.parts.sort((a, b) => a.partNumber - b.partNumber);
+      return { id: g.id, collection: g.collection, title: g.parts[0].title.replace(/\s*—\s*Part\s*\d+$/i, ''), tags: g.tags, font: g.font, color: g.color, sound: g.sound, isMultiPart: true, parts: g.parts };
+    });
+    return standalone.concat(multiPart);
+  }
+
+  function buildQuotes() {
+    return (loaded.quotes || []).map(q => ({ id: q.quote_id, text: q.text, origin: q.origin, tags: (q.tags || '').split(',').map(t => t.trim()).filter(Boolean) }));
+  }
+  function buildMusic() {
+    return (loaded.music || []).map(t => ({ id: t.track_id, title: t.title, type: t.type, source: t.source, src: t.embed_url_or_file, description: t.description }));
+  }
+  function buildBlog() {
+    return (loaded.blog || []).map(p => ({ id: p.post_id, title: p.title, category: p.category, date: p.date, excerpt: p.excerpt, body: p.body }))
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
+  }
+  function buildPopups() {
+    return (loaded.popups || [])
+      .filter(p => p.popup_id && String(p.active).toLowerCase() !== 'no' && String(p.active).toLowerCase() !== 'false')
+      .map(p => ({
+        id: p.popup_id, type: p.type || 'general', title: p.title, message: p.message,
+        image: p.image || '', sound: p.sound || '',
+        delaySeconds: parseInt(p.delay_seconds, 10) || 30,
+        repeatEverySeconds: parseInt(p.repeat_every_seconds, 10) || 0,
+        showOn: (p.show_on || 'all').split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
+        linkType: (p.link_type || 'none').toLowerCase(), linkId: p.link_id || '', linkLabel: p.link_button_label || '',
+        whatsappMessage: p.whatsapp_message || ''
+      }));
+  }
+
+  function refresh() {
+    const data = {
+      generatedAt: new Date().toISOString(),
+      books: buildBooks(), poems: buildPoems(), quotes: buildQuotes(), music: buildMusic(), blog: buildBlog(),
+      promoPopups: buildPopups()
+    };
+    const chapterCount = data.books.reduce((n, b) => n + b.chapters.length, 0);
+    summaryEl.classList.add('show');
+    summaryEl.textContent =
+      `Books: ${data.books.length}   Chapters: ${chapterCount}\n` +
+      `Poems: ${data.poems.length}   Quotes: ${data.quotes.length}\n` +
+      `Music tracks: ${data.music.length}   Blog posts: ${data.blog.length}\n` +
+      `Promo popups: ${data.promoPopups.length}`;
+
+    const requiredLoaded = ['books', 'chapters', 'poems', 'quotes', 'music', 'blog'].every(s => loaded[s]);
+    downloadBtn.disabled = !requiredLoaded;
+    downloadBtn.textContent = requiredLoaded ? 'Download data.js' : 'Download data.js (load your workbook first)';
+    downloadBtn.onclick = () => downloadDataJs(data);
+  }
+
+  function downloadDataJs(data) {
+    const out = `/**\n * AUTO-GENERATED via update-content.html — do not edit by hand.\n * Generated: ${data.generatedAt}\n */\nwindow.JTKIAZ_DATA = ${JSON.stringify(data, null, 2)};\n`;
+    const blob = new Blob([out], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'data.js';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+})();
+</script>
+</body>
+</html>

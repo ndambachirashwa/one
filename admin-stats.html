@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JTKiaz App — Stats (private)</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/theme.css">
+<style>
+  /* This page reuses the app's own design tokens (css/style.css) so it
+     matches the look of the site, but it is a completely separate,
+     un-linked page — see the README §14.1 note at the bottom. */
+  body { padding-bottom: var(--space-5); }
+  .admin-wrap { max-width: 900px; margin: 0 auto; padding: var(--space-4) var(--space-3); }
+  .admin-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3); }
+  .admin-head h1 { font-family: var(--font-display); font-size: 2rem; margin: 0 0 0.3rem; }
+  .admin-head p { color: var(--brown-soft); margin: 0; max-width: 560px; font-size: 0.9rem; }
+  .admin-note {
+    font-family: var(--font-mono); font-size: 0.78rem; color: var(--brown-soft);
+    border: 1px dashed var(--brown-soft); padding: var(--space-2); margin-bottom: var(--space-3);
+    background: var(--parchment-dim);
+  }
+  .admin-note strong { color: var(--ink); }
+  .refresh-btn { font-family: var(--font-mono); font-size: 0.8rem; padding: 0.6rem 1.1rem; background: var(--ink); color: var(--parchment); border-radius: var(--radius); white-space: nowrap; }
+  .refresh-btn:hover { background: var(--brown); }
+  .refresh-btn[disabled] { opacity: 0.5; }
+  .stats-section { margin-bottom: var(--space-4); }
+  .stats-section h2 { font-family: var(--font-display); font-size: 1.3rem; margin: 0 0 0.6rem; border-bottom: 1px solid var(--parchment-deep); padding-bottom: 0.4rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th, td { text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--parchment-deep); }
+  th { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brown-soft); }
+  td.num { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
+  tr.totals td { font-weight: 700; border-top: 2px solid var(--brown-soft); border-bottom: none; }
+  .loading-cell { color: var(--silver); font-family: var(--font-mono); }
+  .empty-note { color: var(--brown-soft); font-family: var(--font-mono); font-size: 0.85rem; padding: var(--space-2) 0; }
+</style>
+</head>
+<body>
+<div class="admin-wrap">
+  <div class="admin-head">
+    <div>
+      <h1>📊 Stats <span style="color:var(--gold)">(private)</span></h1>
+      <p>Real view and like counts for every book, chapter, poem, track and blog post — pulled live from the same counter service the app writes to. Nothing on this page is visible anywhere in the public app.</p>
+    </div>
+    <button class="refresh-btn" id="refresh-btn">↻ Refresh counts</button>
+  </div>
+
+  <div class="admin-note">
+    <strong>Keep this page's URL to yourself.</strong> It isn't linked from
+    anywhere in the app and isn't in the tab nav — but it also isn't
+    password-protected, because the site has no server/login system to check
+    a password against (see README §14.1). Anyone who knows this exact
+    address, or who knows your CountAPI namespace, could load it. If that's
+    not enough privacy for your needs, don't publish this file to the same
+    public folder as the rest of the site — keep it locally and open it from
+    your own computer instead, or ask about adding real login-gated hosting
+    later.
+  </div>
+
+  <div id="stats-root">
+    <p class="loading-cell">Loading your content list…</p>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script>
+(function () {
+  'use strict';
+  // Must match COUNTAPI_NAMESPACE in js/app.js exactly, or the counts here
+  // won't match what the live app is actually recording.
+  const COUNTAPI_NAMESPACE = 'jtkiaz-app-v1';
+
+  const DATA = window.JTKIAZ_DATA || { books: [], poems: [], quotes: [], music: [], blog: [] };
+  const root = document.getElementById('stats-root');
+  const refreshBtn = document.getElementById('refresh-btn');
+
+  // Build the same list of engagement keys the live app uses (see
+  // engageBarHTML() calls in js/app.js) — one row per trackable item.
+  function buildItems() {
+    const items = [];
+    DATA.books.forEach(b => {
+      items.push({ section: 'Books', label: b.title, type: 'book', id: b.id });
+      b.chapters.forEach(c => {
+        items.push({ section: 'Books', label: `${b.title} — Ch. ${c.number}: ${c.title}`, type: 'book-chapter', id: `book:${b.id}:${c.number}` });
+      });
+    });
+    DATA.poems.forEach(p => {
+      if (p.isMultiPart) {
+        p.parts.forEach(part => {
+          items.push({ section: 'Poems', label: `${p.title} — Part ${part.partNumber}`, type: 'poem', id: `${p.id}-part${part.partNumber}` });
+        });
+      } else {
+        items.push({ section: 'Poems', label: p.title, type: 'poem', id: p.id });
+      }
+    });
+    DATA.music.forEach(t => items.push({ section: 'Music', label: t.title, type: 'track', id: t.id }));
+    DATA.blog.forEach(p => items.push({ section: 'Blog', label: p.title, type: 'blog', id: p.id }));
+    return items;
+  }
+
+  async function countGet(key) {
+    try {
+      const res = await fetch(`https://api.countapi.xyz/get/${COUNTAPI_NAMESPACE}/${encodeURIComponent(key)}`);
+      if (!res.ok) return 0;
+      const data = await res.json();
+      return typeof data.value === 'number' ? data.value : 0;
+    } catch (e) { return 0; }
+  }
+
+  function esc(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, s => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[s]));
+  }
+
+  // fetch in small batches so we don't fire hundreds of requests at once
+  async function batched(list, worker, size) {
+    const out = [];
+    for (let i = 0; i < list.length; i += size) {
+      const slice = list.slice(i, i + size);
+      const results = await Promise.all(slice.map(worker));
+      out.push(...results);
+    }
+    return out;
+  }
+
+  async function render() {
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = '↻ Loading…';
+    const items = buildItems();
+    if (!items.length) {
+      root.innerHTML = '<p class="empty-note">No content found — is js/data.js up to date?</p>';
+      refreshBtn.disabled = false;
+      refreshBtn.textContent = '↻ Refresh counts';
+      return;
+    }
+
+    const withCounts = await batched(items, async (item) => {
+      const key = `${item.type}:${item.id}`;
+      const [views, likes] = await Promise.all([countGet(`view:${key}`), countGet(`like:${key}`)]);
+      return Object.assign({}, item, { views, likes });
+    }, 8);
+
+    const sections = {};
+    withCounts.forEach(it => { (sections[it.section] = sections[it.section] || []).push(it); });
+
+    let totalViews = 0, totalLikes = 0;
+    let html = '';
+    Object.keys(sections).forEach(sec => {
+      const rows = sections[sec];
+      let secViews = 0, secLikes = 0;
+      html += `<div class="stats-section"><h2>${esc(sec)}</h2><table><thead><tr><th>Title</th><th class="num">Views</th><th class="num">Likes</th></tr></thead><tbody>`;
+      rows.forEach(r => {
+        secViews += r.views; secLikes += r.likes;
+        html += `<tr><td>${esc(r.label)}</td><td class="num">${r.views}</td><td class="num">${r.likes}</td></tr>`;
+      });
+      html += `<tr class="totals"><td>${esc(sec)} total</td><td class="num">${secViews}</td><td class="num">${secLikes}</td></tr>`;
+      html += `</tbody></table></div>`;
+      totalViews += secViews; totalLikes += secLikes;
+    });
+    html += `<div class="stats-section"><table><tbody><tr class="totals"><td>Everything, total</td><td class="num">${totalViews}</td><td class="num">${totalLikes}</td></tr></tbody></table></div>`;
+
+    root.innerHTML = html;
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = '↻ Refresh counts';
+  }
+
+  refreshBtn.addEventListener('click', render);
+  render();
+})();
+</script>
+</body>
+</html>

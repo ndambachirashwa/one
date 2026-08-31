@@ -1,0 +1,47 @@
+/* ==========================================================================
+   THEME OVERRIDES — safe place to change fonts (and colors) without
+   touching css/style.css. Loaded after style.css, so anything you set
+   in :root here wins.
+
+   HOW TO USE
+   1. Pick one of the pairings below and delete the /* and *​/ around it
+      to turn it on (only enable ONE at a time).
+   2. If you want a font not listed here, swap in any Google Fonts name —
+      keep the same three roles: --font-display, --font-body, --font-mono.
+   3. Save this file and refresh index.html. No build step needed —
+      CSS changes apply immediately.
+   ========================================================================== */
+
+/* ---- Option A: Playfair Display + Lato — classic editorial, more formal ----
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Lato:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root {
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Lato', sans-serif;
+}
+*/
+
+/* ---- Option B: Spectral + Karla — warmer, literary, softer on long reads ----
+@import url('https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Karla:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root {
+  --font-display: 'Spectral', Georgia, serif;
+  --font-body: 'Karla', sans-serif;
+}
+*/
+
+/* ---- Option C: Space Grotesk + Inter — modern, tech-forward, punchier ----
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root {
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+*/
+
+/* ---- Want to nudge the palette instead of (or as well as) fonts? ----
+   Uncomment and adjust any of these — they override the same variables
+   style.css uses everywhere, so one change here updates the whole app.
+:root {
+  --gold: #C79A49;
+  --brown: #3E2A1C;
+  --silver: #B7AF9E;
+}
+*/

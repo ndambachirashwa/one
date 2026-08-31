@@ -2109,21 +2109,6 @@
 <p>${list.length} track${list.length === 1 ? '' : 's'} — Psalm 87:7 (KJV)<br>
 As well the singers as the players on instruments shall be there: all my springs are in thee.</p>
 
-<p>Psalm 33:2 (KJV)<br>
-Praise the LORD with harp: sing unto him with the psaltery and an instrument of ten strings.</p>
-
-<p>Psalm 68:25 (KJV)<br>
-The singers went before, the players on instruments followed after; among them were the damsels playing with timbrels.</p>
-
-<p>Psalm 81:2-3 (KJV)<br>
-Take a psalm, and bring hither the timbrel, the pleasant harp with the psaltery. Blow up the trumpet in the new moon, in the time appointed, on our solemn feast day.</p>
-
-<p>Psalm 149:3 (KJV)<br>
-Let them praise his name in the dance: let them sing praises unto him with the timbrel and harp.</p>
-
-<p>Psalm 150:3-5 (KJV)<br>
-Praise him with the sound of the trumpet: praise him with the psaltery and harp. Praise him with the timbrel and dance: praise him with stringed instruments and organs. Praise him upon the loud cymbals: praise him upon the high sounding cymbals.</p>
-
 <p>Psalm 33:3 (KJV)<br>
 "Sing unto him a new song; play skilfully with a loud noise."</p>
 

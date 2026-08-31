@@ -511,7 +511,7 @@ window.JTKIAZ_DATA = {
     },
     {
       "id": "p011",
-      "collection": "micro",
+      "collection": "Micro",
       "title": "Captive in Your arms",
       "body": "Captive in Your arms, Hidden from the sunshine, Only alive in the night time!\n\nFall asleep in your eyes, Mesmerized by your dance, By chance, release a laugh, Perhaps I had a past.",
       "tags": [

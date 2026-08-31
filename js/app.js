@@ -1355,7 +1355,7 @@
     const tiles = [
       { tab: 'books', num: '01', title: 'Books', desc: 'Fiction & non-fiction, chapter by chapter — unlock the next chapter as you finish the last.', count: `${DATA.books.length} books · ${totalChapters} chapters` },
       { tab: 'poems', num: '02', title: 'Poems', desc: 'Micro, short, long and spoken word — filter by size or let the app surprise you.', count: `${DATA.poems.length} pieces` },
-      { tab: 'quotes', num: '03', title: 'Quotes', desc: 'African proverbs and quotes, tagged by theme. A new one greets you each visit.', count: `${DATA.quotes.length} quotes` },
+      { tab: 'quotes', num: '03', title: 'Quotes', desc: 'African and Bible proverbs and quotes, tagged by theme. A new one greets you each visit.', count: `${DATA.quotes.length} quotes` },
       { tab: 'music', num: '04', title: 'Music', desc: 'Spoken word albums and tracks, streaming right in the app.', count: `${DATA.music.length} tracks` },
       { tab: 'blog', num: '05', title: 'Blog', desc: 'Announcements, Bible study, and behind-the-scenes notes from the studio.', count: `${DATA.blog.length} posts` }
     ];
@@ -1364,7 +1364,7 @@
     root.innerHTML = `
       <section class="hero wrap">
         <span class="hero-eyebrow hero-cta-eyebrow">Sponsor a Poem, Song, Book or Chapter</span>
-        <h1>Faith, story and sound<br><em>in one quiet room.</em></h1>
+        <h1>Faith, story and sound<br><em>in one connected space.</em></h1>
         <p class="lede">JTKiaz App is home for J.T. KIAS's books, poems, quotes and spoken word — built to be read, heard, returned to, and <strong>sponsored</strong> so more of it gets made.</p>
         <a class="btn accent hero-sponsor-btn" href="${waLink("Hi! I'd like to sponsor a poem, song, book or chapter on JTKiaz App 🙏")}" target="_blank" rel="noopener">💛 Sponsor something today</a>
         <div class="hero-stats">

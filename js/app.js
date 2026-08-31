@@ -1950,7 +1950,7 @@
         <div class="view-header">
           <div>
             <h2>Quotes</h2>
-            <p>Old Testament, New Testament and African proverbs, tagged by theme. Order rotates every visit so nothing gets buried — commission an original one of your own.</p>
+            <p>Old Testament, New Testament and African proverbs, tagged by theme. A word fitly spoken is like apples of gold in pictures of silver.</p>
           </div>
           <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
             ${viewToggleHTML('quotes')}

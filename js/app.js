@@ -1725,7 +1725,7 @@
         <div class="view-header">
           <div>
             <h2>Poems</h2>
-            <p>Micro, short, long and spoken word pieces. Filter by size, hit surprise me, or sponsor one that moves you. The order shuffles every visit so nothing gets buried.</p>
+            <p>Micro, short, long and spoken word pieces. Filter by size, hit surprise me, or sponsor one you want to see. Poetry is the roots of my music and books.</p>
           </div>
           <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
             ${viewToggleHTML('poems')}

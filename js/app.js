@@ -2109,19 +2109,19 @@
 <p>${list.length} track${list.length === 1 ? '' : 's'} — Psalm 87:7 (KJV)<br>
 As well the singers as the players on instruments shall be there: all my springs are in thee.</p>
 
-<p>Psalm 33:3 (KJV)<br>
+<p>Psalm 33:3 <br>
 "Sing unto him a new song; play skilfully with a loud noise."</p>
 
-<p>Psalm 96:1 (KJV)<br>
+<p>Psalm 96:1 <br>
 "O sing unto the LORD a new song: sing unto the LORD, all the earth."</p>
 
-<p>Psalm 98:1 (KJV)<br>
+<p>Psalm 98:1 <br>
 "O sing unto the LORD a new song; for he hath done marvellous things: his right hand, and his holy arm, hath gotten him the victory."</p>
 
-<p>Isaiah 42:10 (KJV)<br>
+<p>Isaiah 42:10<br>
 "Sing unto the LORD a new song, and his praise from the end of the earth, ye that go down to the sea, and all that is therein; the isles, and the inhabitants thereof."</p>
 
-<p>Help me reach 100 songs. Studio time isn't free — sponsor the next one.</p>
+<p>Let us reach 100 songs. Studio time isn't free — sponsor the next one.</p>
       
           <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
             ${tabCtaBtnHTML('music')}
